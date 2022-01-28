@@ -1,0 +1,11 @@
+{
+  "files.associations": {
+    "cstdio": "c",
+    "*.tcc": "c",
+    "string_view": "c",
+    "functional": "c",
+    "string.h": "c",
+    "random": "c",
+    "sstream": "c"
+  }
+}
