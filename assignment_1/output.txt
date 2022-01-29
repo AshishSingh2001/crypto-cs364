@@ -1,10 +1,10 @@
 Enter Plain Text : 
 ∆ : instrumentsx
 Enter Playfair Key : 
-here
 m o n a r 
 c h y b d 
 e f g i k 
 l p q s t 
 u v w x z 
-C1 : gatlmzclrqxaUU
+C1 : gatlmzclrqxa
+C2 : jdwopcfoutad

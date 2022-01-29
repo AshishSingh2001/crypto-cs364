@@ -15,6 +15,8 @@ char *sanitisePlayfairKey(char *plainText);
 void generateKeyTable(char *key, char keyMatrix[5][5]);
 char *encryptPlayfair(char *key, char *plainText, char keyMatrix[5][5]);
 void searchKeyMatrix(char a, int aind[2], char keyMatrix[5][5]);
+void printKeyMatrix(char keyMatrix[5][5]);
+char *encryptCaesar(int key, char *plainText);
 
 /**
  * @brief wrapper for fgets
@@ -55,18 +57,25 @@ int main(int argc, char const *argv[])
     char rawK1[50];
     printf("Enter Playfair Key : ");
     myGets(rawK1, 50);
-    // free(rawK1);
     char *k1 = sanitisePlayfairKey(rawK1);
 
     // Task 5 - Output generated 5x5 key matrix
 
     char keyMatrix[5][5];
     generateKeyTable(k1, keyMatrix);
+    printKeyMatrix(keyMatrix);
 
     // Task 6 - Encrypt using playfair cipher
 
     char *c1 = encryptPlayfair(k1, plainText, keyMatrix);
     printf("C1 : %s\n", c1);
+
+    // Task 7 - Encrypt C1 using caesar cipher with key(k2) = 3
+    int k2 = 3;
+    char *c2 = encryptCaesar(k2, c1);
+    printf("C2 : %s\n", c2);
+
+    // task 8 - 
 
     return 0;
 }
@@ -160,7 +169,7 @@ char *sanitisePlayfairKey(char *rawK1)
  * @brief Make the 5x5 Key Matrix for Playfair Cipher
  * 
  * @param key Key used to encrypt
- * @param keyTable matrix which is generated
+ * @param keyMatrix matrix which is generated
  */
 void generateKeyTable(char *key, char keyMatrix[5][5])
 {
@@ -170,7 +179,6 @@ void generateKeyTable(char *key, char keyMatrix[5][5])
         indexedAlphabet[key[i] - 97] = 2;
     }
     indexedAlphabet['j' - 97] = 1;
-    printf("here\n");
     // to separate 'j' from being processed
 
     int i = 0, j = 0; // indexes for keyMatrix
@@ -202,6 +210,15 @@ void generateKeyTable(char *key, char keyMatrix[5][5])
             }
         }
     }
+}
+
+/**
+ * @brief Print the matrix for palayfair encryption
+ * 
+ * @param keyMatrix playfair key matrix
+ */
+void printKeyMatrix(char keyMatrix[5][5])
+{
     for (size_t i = 0; i < 5; i++)
     {
         for (size_t j = 0; j < 5; j++)
@@ -235,14 +252,16 @@ void searchKeyMatrix(char a, int aind[2], char keyMatrix[5][5])
 /**
  * @brief encrypt plain text using playfair cipher
  * 
- * @param encryptedText 
- * @param keyMatrix 
- * @param plainText 
+ * @param key key for encryption
+ * @param plainText text to be encrypted
+ * @param keyMatrix matrix used for encryption
+ * @return char* encrypted text
  */
 char *encryptPlayfair(char *key, char *plainText, char keyMatrix[5][5])
 {
-    char encryptedText[strlen(plainText)];
-    for (size_t i = 0; i < strlen(plainText); i += 2)
+    int len = strlen(plainText);
+    char *encryptedText = (char *)malloc(len + 1);
+    for (size_t i = 0; i < len; i += 2)
     {
         int aind[2] = {-1}, bind[2] = {-1};
         searchKeyMatrix(plainText[i], aind, keyMatrix);
@@ -264,8 +283,19 @@ char *encryptPlayfair(char *key, char *plainText, char keyMatrix[5][5])
             encryptedText[i + 1] = keyMatrix[bind[0]][aind[1]];
         }
     }
-    // allocate memory and return sanitised text
-    char *copy = (char *)malloc(strlen(encryptedText) + 1);
-    strcpy(copy, encryptedText);
-    return copy;
+    return encryptedText;
+}
+
+char *encryptCaesar(int key, char *plainText)
+{
+    int len = strlen(plainText);
+    char *encryptedText = (char *)malloc(len + 1);
+    for (size_t i = 0; i < len; i++)
+    {
+        // shft character by key
+
+        int shiftedAplhaIndex = (((int)plainText[i] - 97 + key) % 26);
+        encryptedText[i] = (char)(shiftedAplhaIndex + 97);
+    }
+    return encryptedText;
 }
