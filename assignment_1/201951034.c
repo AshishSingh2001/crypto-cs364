@@ -17,6 +17,23 @@ char *encryptPlayfair(char *key, char *plainText, char keyMatrix[5][5]);
 void searchKeyMatrix(char a, int aind[2], char keyMatrix[5][5]);
 void printKeyMatrix(char keyMatrix[5][5]);
 char *encryptCaesar(int key, char *plainText);
+char *encryptAffine(int alpha, int beta, char *plainText);
+char *decryptAffine(int alpha, int beta, char *encryptedText);
+char *decryptCaesar(int key, char *encryptedText);
+char *decryptPlayfair(char *key, char *encryptedText, char keyMatrix[5][5]);
+
+
+/**
+ * @brief always return a positive modulo
+ * 
+ * @param num 
+ * @param m 
+ * @return int 
+ */
+int pMod(int num, int mod)
+{
+    return (num % mod + mod) % mod;
+}
 
 /**
  * @brief wrapper for fgets
@@ -46,7 +63,6 @@ int main(int argc, char const *argv[])
     // Task 2 - sanitise text
 
     char *plainText = sanitisePlayfairText(rawText);
-    // free(rawText);
 
     // Task 3 - Output ∆
 
@@ -75,7 +91,18 @@ int main(int argc, char const *argv[])
     char *c2 = encryptCaesar(k2, c1);
     printf("C2 : %s\n", c2);
 
-    // task 8 - 
+    // task 8 -
+    int alpha = 7, beta = 5;
+    char *c3 = encryptAffine(alpha, beta, c2);
+    printf("C3 : %s\n", c3);
+
+    // Decrypting Affine Cipher
+    char *decryptedC2 = decryptAffine(alpha, beta, c3);
+    printf("decrypted C2 : %s\n", decryptedC2);
+
+    // Decrypting Caesar Cipher
+    char *decryptedC1 = decryptCaesar(k2, decryptedC2);
+    printf("decrypted C1 : %s\n", decryptedC1);
 
     return 0;
 }
@@ -141,7 +168,6 @@ char *sanitisePlayfairText(char *rawText)
 char *sanitisePlayfairKey(char *rawK1)
 {
     char sanitisedKey[50];
-    ;
     int j = 0;
     // convert to lower text and replace j with i
     int len = strlen(rawK1);
@@ -286,6 +312,13 @@ char *encryptPlayfair(char *key, char *plainText, char keyMatrix[5][5])
     return encryptedText;
 }
 
+/**
+ * @brief encrypt using Caesar cipher
+ * 
+ * @param key used to shift the characters
+ * @param plainText text to be encrypted
+ * @return char* encrypted text
+ */
 char *encryptCaesar(int key, char *plainText)
 {
     int len = strlen(plainText);
@@ -294,8 +327,86 @@ char *encryptCaesar(int key, char *plainText)
     {
         // shft character by key
 
-        int shiftedAplhaIndex = (((int)plainText[i] - 97 + key) % 26);
-        encryptedText[i] = (char)(shiftedAplhaIndex + 97);
+        int shiftedAplhaIndex = (((int)plainText[i] - 'a' + key) % 26);
+        encryptedText[i] = (char)(shiftedAplhaIndex + 'a');
     }
     return encryptedText;
 }
+
+/**
+ * @brief encrypt using Affine cipher
+ * 
+ * @param alpha first key
+ * @param beta second key
+ * @param plainText text to be encrypted
+ * @return char* encrypted text
+ */
+char *encryptAffine(int alpha, int beta, char *plainText)
+{
+    int len = strlen(plainText);
+    char *encryptedText = (char *)malloc(len + 1);
+    for (size_t i = 0; i < len; i++)
+    {
+        // encrypting using (alpha*x + beta) % 26
+        int shiftAlpha = (((alpha * (plainText[i] - 'a')) + beta) % 26);
+        encryptedText[i] = (char)(shiftAlpha + 'a');
+    }
+    return encryptedText;
+}
+
+/**
+ * @brief decrypt Affine Cipher
+ * 
+ * @param alpha first key
+ * @param beta second key
+ * @param encryptedText 
+ * @return char* decrypted text
+ */
+char *decryptAffine(int alpha, int beta, char *encryptedText)
+{
+    int len = strlen(encryptedText);
+    char *plainText = (char *)malloc(len + 1);
+
+    int alphaInv;
+    // finding a^-1
+    for (size_t i = 0; i < 26; i++)
+    {
+        if ((alpha * i) % 26 == 1)
+            alphaInv = i;
+    }
+
+    for (size_t i = 0; i < len; i++)
+    {
+        int shiftAlpha = pMod((encryptedText[i] - 'a' - beta) * alphaInv, 26);
+        plainText[i] = (char)(shiftAlpha + 'a');
+    }
+    return plainText;
+}
+
+
+/**
+ * @brief decrypt Caesar Cipher
+ * 
+ * @param key key
+ * @param encryptedText 
+ * @return char* decrypted text
+ */
+char *decryptCaesar(int key, char *encryptedText)
+{
+    int len = strlen(encryptedText);
+    char *plainText = (char *)malloc(len + 1);
+    for (size_t i = 0; i < len; i++)
+    {
+        // shft character by key
+
+        int shiftAplha = pMod((int)encryptedText[i] - 'a' - key, 26);
+        plainText[i] = (char)(shiftAplha + 'a');
+    }
+    return plainText;
+}
+
+
+char *decryptPlayfair(char *key, char *encryptedText, char keyMatrix[5][5]) {
+    
+}
+
