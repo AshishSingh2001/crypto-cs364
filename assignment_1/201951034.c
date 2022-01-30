@@ -10,43 +10,27 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+// Utility functions
+void myGets(char *inp, int len);
+int pMod(int num, int mod);
+
+// Playfair Cipher
 char *sanitisePlayfairText(char *plainText);
 char *sanitisePlayfairKey(char *plainText);
 void generateKeyTable(char *key, char keyMatrix[5][5]);
-char *encryptPlayfair(char *key, char *plainText, char keyMatrix[5][5]);
-void searchKeyMatrix(char a, int aind[2], char keyMatrix[5][5]);
 void printKeyMatrix(char keyMatrix[5][5]);
-char *encryptCaesar(int key, char *plainText);
-char *encryptAffine(int alpha, int beta, char *plainText);
-char *decryptAffine(int alpha, int beta, char *encryptedText);
-char *decryptCaesar(int key, char *encryptedText);
+void searchKeyMatrix(char a, int aind[2], char keyMatrix[5][5]);
+char *encryptPlayfair(char *key, char *plainText, char keyMatrix[5][5]);
 char *decryptPlayfair(char *key, char *encryptedText, char keyMatrix[5][5]);
 
+// Caesar Cipher
+char *encryptCaesar(int key, char *plainText);
+char *decryptCaesar(int key, char *encryptedText);
 
-/**
- * @brief always return a positive modulo
- * 
- * @param num 
- * @param m 
- * @return int 
- */
-int pMod(int num, int mod)
-{
-    return (num % mod + mod) % mod;
-}
-
-/**
- * @brief wrapper for fgets
- * gets is deprecated so a wrapper for it using fgets
- * and some formatting for the out put string
- */
-void myGets(char *inp, int len)
-{
-    fgets(inp, len, stdin);
-    inp[strcspn(inp, "\n")] = 0;
-    printf("\n");
-}
-
+// Affine Cipher
+char *encryptAffine(int alpha, int beta, char *plainText);
+char *decryptAffine(int alpha, int beta, char *encryptedText);
+// Driver Code
 int main(int argc, char const *argv[])
 {
 #ifndef ONLINE_JUDGE
@@ -82,30 +66,63 @@ int main(int argc, char const *argv[])
     printKeyMatrix(keyMatrix);
 
     // Task 6 - Encrypt using playfair cipher
-
     char *c1 = encryptPlayfair(k1, plainText, keyMatrix);
-    printf("C1 : %s\n", c1);
+    printf("Playfair Cipher (%s) --> C1 : %s\n", k1, c1);
 
     // Task 7 - Encrypt C1 using caesar cipher with key(k2) = 3
     int k2 = 3;
     char *c2 = encryptCaesar(k2, c1);
-    printf("C2 : %s\n", c2);
+    printf("Caesar Cipher       (%d)    --> C2 : %s\n", k2, c2);
 
-    // task 8 -
+    // task 8 - Encrypt C2 using affine cipher with key (7.5)
     int alpha = 7, beta = 5;
     char *c3 = encryptAffine(alpha, beta, c2);
-    printf("C3 : %s\n", c3);
+    printf("Affine Cipher      (%d,%d)   --> C3 : %s\n", alpha, beta, c3);
+
+    printf("\n------------ Decrypting -----------\n\n");
 
     // Decrypting Affine Cipher
     char *decryptedC2 = decryptAffine(alpha, beta, c3);
-    printf("decrypted C2 : %s\n", decryptedC2);
+    printf("decrypted Affine      (%d,%d)   --> C2 : %s\n", alpha, beta, decryptedC2);
 
     // Decrypting Caesar Cipher
     char *decryptedC1 = decryptCaesar(k2, decryptedC2);
-    printf("decrypted C1 : %s\n", decryptedC1);
+    printf("decrypted caesar       (%d)    --> C1 : %s\n", k2, decryptedC1);
+
+    // Decrypting Playfair Cipher
+    char *decryptedPlainText = decryptPlayfair(k1, decryptedC1, keyMatrix);
+    printf("decrypted playfair (%s) --> ∆ : %s\n", k1, decryptedPlainText);
 
     return 0;
 }
+
+// --------------- Utility --------------------
+
+/**
+ * @brief always return a positive modulo
+ * 
+ * @param num 
+ * @param m 
+ * @return int 
+ */
+int pMod(int num, int mod)
+{
+    return (num % mod + mod) % mod;
+}
+
+/**
+ * @brief wrapper for fgets
+ * gets is deprecated so a wrapper for it using fgets
+ * and some formatting for the out put string
+ */
+void myGets(char *inp, int len)
+{
+    fgets(inp, len, stdin);
+    inp[strcspn(inp, "\n")] = 0;
+    printf("\n");
+}
+
+// --------------- Playfair Cipher -------------------
 
 /**
  * @brief sanitises raw text for playfair cipher
@@ -251,6 +268,7 @@ void printKeyMatrix(char keyMatrix[5][5])
             printf("%c ", keyMatrix[i][j]);
         printf("\n");
     }
+    printf("\n");
 }
 
 /**
@@ -313,6 +331,45 @@ char *encryptPlayfair(char *key, char *plainText, char keyMatrix[5][5])
 }
 
 /**
+ * @brief decrypt Playfair Cipher
+ * 
+ * @param key key
+ * @param encryptedText 
+ * @param keyMatrix 
+ * @return char* decrypted text
+ */
+char *decryptPlayfair(char *key, char *encryptedText, char keyMatrix[5][5])
+{
+    int len = strlen(encryptedText);
+    char *plainText = (char *)malloc(len + 1);
+    for (size_t i = 0; i < len; i += 2)
+    {
+        int aind[2] = {-1}, bind[2] = {-1};
+        searchKeyMatrix(encryptedText[i], aind, keyMatrix);
+        searchKeyMatrix(encryptedText[i + 1], bind, keyMatrix);
+
+        if (aind[0] == bind[0])
+        {
+            plainText[i] = keyMatrix[aind[0]][pMod((aind[1] - 1), 5)];
+            plainText[i + 1] = keyMatrix[aind[0]][pMod((bind[1] - 1), 5)];
+        }
+        else if (aind[1] == bind[1])
+        {
+            plainText[i] = keyMatrix[pMod((aind[0] - 1), 5)][aind[1]];
+            plainText[i + 1] = keyMatrix[pMod((bind[0] - 1), 5)][aind[1]];
+        }
+        else
+        {
+            plainText[i] = keyMatrix[aind[0]][bind[1]];
+            plainText[i + 1] = keyMatrix[bind[0]][aind[1]];
+        }
+    }
+    return plainText;
+}
+
+// --------------- Caesar Cipher --------------------
+
+/**
  * @brief encrypt using Caesar cipher
  * 
  * @param key used to shift the characters
@@ -332,6 +389,29 @@ char *encryptCaesar(int key, char *plainText)
     }
     return encryptedText;
 }
+
+/**
+ * @brief decrypt Caesar Cipher
+ * 
+ * @param key key
+ * @param encryptedText 
+ * @return char* decrypted text
+ */
+char *decryptCaesar(int key, char *encryptedText)
+{
+    int len = strlen(encryptedText);
+    char *plainText = (char *)malloc(len + 1);
+    for (size_t i = 0; i < len; i++)
+    {
+        // shft character by key
+
+        int shiftAplha = pMod((int)encryptedText[i] - 'a' - key, 26);
+        plainText[i] = (char)(shiftAplha + 'a');
+    }
+    return plainText;
+}
+
+// --------------- Affine Cipher --------------------
 
 /**
  * @brief encrypt using Affine cipher
@@ -382,31 +462,3 @@ char *decryptAffine(int alpha, int beta, char *encryptedText)
     }
     return plainText;
 }
-
-
-/**
- * @brief decrypt Caesar Cipher
- * 
- * @param key key
- * @param encryptedText 
- * @return char* decrypted text
- */
-char *decryptCaesar(int key, char *encryptedText)
-{
-    int len = strlen(encryptedText);
-    char *plainText = (char *)malloc(len + 1);
-    for (size_t i = 0; i < len; i++)
-    {
-        // shft character by key
-
-        int shiftAplha = pMod((int)encryptedText[i] - 'a' - key, 26);
-        plainText[i] = (char)(shiftAplha + 'a');
-    }
-    return plainText;
-}
-
-
-char *decryptPlayfair(char *key, char *encryptedText, char keyMatrix[5][5]) {
-    
-}
-
