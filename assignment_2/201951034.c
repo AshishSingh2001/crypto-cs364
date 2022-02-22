@@ -1,16 +1,30 @@
 /** @file 201951034.c
  *  @brief Code for CS364 lab Assignment 
- *  DES Cipher
- *  Algorithm can be divided in two main parts
- *  Generating keys and Feistel Rounds
- * 
  *  @author Ashish Kumar Singh
+ * 
+ *  DES Cipher
+ *  A Simple implementation for DES works on input 
+ *  text of size 64 bit and key 64 bit
+ * 
+ *  Note - The parity bits are automatically ignored while using PC1
+ *  so the input is 64 bits as specified in [FIPS46]
+ * 
+ *  The implementation has been made using the specification
+ *  given in [FIPS46]
+ *  "Specifications for the Data Encryption Standard." Federal 
+ *  Information Processing Standards Publication 46 (January 15, 1977).
+ * https://csrc.nist.gov/csrc/media/publications/fips/46/3/archive/1999-10-25/documents/fips46-3.pdf
+ * 
+ *  The test vectors are taken from [Riv85]
+ *  Ronald L. Rivest ,Testing Implementations of {DES}
+ *  https://people.csail.mit.edu/rivest/pubsRiv85.txt
  */
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include <math.h>
+#include <stdbool.h>
 
 // Stores keys for all the rounds
 char *round_keys[16];
@@ -18,9 +32,8 @@ char *round_keys[16];
 // Utility functions
 
 void my_gets(char *inp, int len);
-int p_mod(int num, int mod);
 char *xor_string(char *a, char *b);
-char *int_to_binary(int decimal);
+char *int_to_binary(int decimal, int maxlen);
 
 // Generate Keys
 
@@ -31,42 +44,106 @@ char *key_pc2(char *key64);
 
 // DES Algorithm
 
-char *data_encryption_algorithm(char *plain_text);
+char *data_encryption_algorithm(char *plain_text, bool isDecrypt);
 char *initial_permutation(char *plain_text);
 char *expansion_permutation(char *text_chunk);
 char *substitution_box(char *xored, int i);
 char *final_permutation(char *combined_text);
 char *p_permutation(char *substituted);
 
+char *des(char *input, char *key, bool isDecrypt);
+void validate_des();
+
 // Driver Code
 int main(int argc, char const *argv[])
 {
-#ifndef ONLINE_JUDGE
-    freopen("input.txt", "r", stdin);
-    freopen("output.txt", "w", stdout);
-#else
-#endif
-    // char rawText[50];
-    // printf("Enter Plain Text : ");
-    // myGets(rawText, 50);
+    // #ifndef ONLINE_JUDGE
+    //     freopen("input.txt", "r", stdin);
+    //     freopen("output.txt", "w", stdout);
+    // #else
+    // #endif
+    validate_des();
+    char plain_text[65];
+    printf("Enter 64 bit Text : ");
+    my_gets(plain_text, 66);
 
-    // char key[64];
-    // printf("Enter 64 bit key : ");
-    // myGets(rawText, 64);
-    char *key = "10101010101110110000100100011000001001110011"
-                "01101100110011011101";
-    // generate and store keys for each round
-    generate_keys(key);
+    char key[65];
+    printf("Enter 64 bit key : ");
+    my_gets(key, 66);
 
-    char *plain_text = "1010101111001101111001101010101111001101000100110010010100110110";
     // encrypting using DES
-    char *encrypted_text = data_encryption_algorithm(plain_text);
-    printf("%s", encrypted_text);
-    // to decrypt we need to reverse the
-    char *decrypted_text = data_encryption_algorithm(encrypted_text);
-    printf("%s", decrypted_text);
+    char *encrypted_text = des(plain_text, key, false);
+    printf("Encrypted Text : %s\n", encrypted_text);
+
+    // perform decryption on the encrypted text
+    char *decrypted_text = des(encrypted_text, key, true);
+    printf("Decrypted Text : %s\n", decrypted_text);
+
+    if (strcmp(plain_text, decrypted_text) == 0)
+    {
+        printf("\nThe Input Text and the Text received after decrypting are identical\n");
+    }
 
     return 0;
+}
+
+/**
+ * @brief DES Implementation
+ * 
+ * @param input plain text 64 bit
+ * @param key key 64 bit
+ * @param isDecrypt bool is decryption mode
+ * @return char* encrypted text
+ */
+char *des(char *input, char *key, bool isDecrypt)
+{
+    generate_keys(key);
+    return data_encryption_algorithm(input, isDecrypt);
+}
+
+/**
+ * @brief Validates the implementation of DES
+ * using method mentioned in [Riv85]
+ *  i       Xi                      Number of errors NOT detected
+	--      ----------------        -----------------------------
+	0       9474B8E8C73BCA7D        36,568
+	1       8DA744E0C94E5E17        14,170
+	2       0CDB25E3BA3C6D79         4,842
+	3       4784C4BA5006081F         2,866
+	4       1CF1FC126F2EF842         1,550
+	5       E4BE250042098D13           996
+	6       7BFC5DC6ADB5797C           652
+	7       1AB3B4D82082FB28           458
+	8       C1576A14DE707097           274
+	9       739B68CD2E26782A           180
+	10      2A59F0C464506EDB           126
+	11      A5C39D4251F0A81E            94
+	12      7239AC9A6107DDB1            72
+	13      070CAC8590241233            52
+	14      78F87B6E3DFECF61            20
+	15      95EC2578C2C433F0             4
+	16      1B1A2DDB4C642438             0 
+    Reference - [Riv85]
+
+    we input the X0 and check if the final output is X16 after 16 rounds
+ */
+void validate_des()
+{
+    // X0 = 0x9474B8E8C73BCA7D
+
+    char *input = "1001010001110100101110001110100011000111001110111100101001111101";
+    for (int i = 0; i < 16; i++)
+    {
+        input = des(input, input, (i % 2 != 0));
+    }
+    char *output = "0001101100011010001011011101101101001100011001000010010000111000";
+    int l = strlen(output);
+    int x = strlen(input);
+    // X16 = 0x1B1A2DDB4C642438
+    if (strcmp(input, output) == 0)
+    {
+        printf("\nCurrent implementation is valid using methods mentioned in [Riv85]\n\n");
+    }
 }
 
 // *************** Utility *****************
@@ -80,7 +157,7 @@ void my_gets(char *inp, int len)
 {
     fgets(inp, len, stdin);
     inp[strcspn(inp, "\n")] = 0;
-    // printf("\n");
+    printf("\n");
 }
 
 /**
@@ -89,10 +166,10 @@ void my_gets(char *inp, int len)
  * @param decimal 
  * @return char* binary string
  */
-char *int_to_binary(int decimal)
+char *int_to_binary(int decimal, int maxlen)
 {
-    char *binary = (char *)malloc(4 + 1);
-    int curr = 3;
+    char *binary = (char *)malloc(maxlen + 1);
+    int curr = maxlen - 1;
     for (size_t i = 0; i < 4; i++)
     {
         binary[i] = '0';
@@ -125,6 +202,17 @@ char *xor_string(char *a, char *b)
         xored[i] = (a[i] == b[i]) ? '0' : '1';
     }
     return xored;
+}
+
+/**
+ * @brief convert hexadecimal string to 64bit binary
+ * 
+ * @param hex 
+ * @return char* binary string
+ */
+char *hex_to_bin(char *hex)
+{
+    return int_to_binary(strtol(hex, NULL, 10), 64);
 }
 
 // *************** Generate Keys *****************
@@ -250,7 +338,14 @@ char *key_pc2(char *key56)
 
 // *************** DES Algorithm *****************
 
-char *data_encryption_algorithm(char *plain_text)
+/**
+ * @brief Main algorithm for DES
+ * 
+ * @param plaintext 64 bit text
+ * @param isDecrypt is decryption mode
+ * @return char* encrypted/decrypted text
+ */
+char *data_encryption_algorithm(char *plain_text, bool isDecrypt)
 {
     //initial permutation
     char *text_ip = (char *)malloc(64);
@@ -267,8 +362,8 @@ char *data_encryption_algorithm(char *plain_text)
     {
         // expanding the right side of plain text
         char *right_expanded = expansion_permutation(right);
-
-        char *xored = xor_string(round_keys[i], right_expanded);
+        int key_num = isDecrypt ? 15 - i : i;
+        char *xored = xor_string(round_keys[key_num], right_expanded);
 
         // divide in 8 equal parts
         char *substituted = (char *)malloc(16 + 1);
@@ -300,6 +395,9 @@ char *data_encryption_algorithm(char *plain_text)
     return cipher_text;
 }
 
+/**
+ * @brief Initial permutation for text
+ */
 char *initial_permutation(char *plain_text)
 {
     // The initial permutation table
@@ -321,6 +419,9 @@ char *initial_permutation(char *plain_text)
     return permuted_text;
 }
 
+/**
+ * @brief final permutation or the inverse or the initial permutation
+ */
 char *final_permutation(char *combined_text)
 {
     // The final permutation table
@@ -342,6 +443,9 @@ char *final_permutation(char *combined_text)
     return inverted_text;
 }
 
+/**
+ * @brief p box permutation
+ */
 char *p_permutation(char *substituted)
 {
     // The array elements denote the bit numbers
@@ -359,6 +463,12 @@ char *p_permutation(char *substituted)
     return permuted_text;
 }
 
+/**
+ * @brief expansion permutation
+ * 
+ * @param text_chunk 
+ * @return char* 
+ */
 char *expansion_permutation(char *text_chunk)
 {
     // expansiona table
@@ -378,6 +488,9 @@ char *expansion_permutation(char *text_chunk)
     return expanded;
 }
 
+/**
+ * @brief s box compression
+ */
 char *substitution_box(char *xored, int i)
 {
     // The substitution table with values [0,16)
@@ -423,5 +536,5 @@ char *substitution_box(char *xored, int i)
     int r = strtol(row, NULL, 2);
     int c = strtol(col, NULL, 2);
     int val = substition_boxes[i][r][c];
-    return int_to_binary(val);
+    return int_to_binary(val, 4);
 }

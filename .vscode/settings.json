@@ -1,11 +1,16 @@
 {
   "files.associations": {
-    "cstdio": "c",
     "*.tcc": "c",
+    "cstring": "c",
+    "string": "c",
     "string_view": "c",
-    "functional": "c",
-    "string.h": "c",
-    "random": "c",
-    "sstream": "c"
+    "fstream": "c",
+    "istream": "c",
+    "ostream": "c",
+    "sstream": "c",
+    "stdexcept": "c",
+    "system_error": "c",
+    "typeinfo": "c",
+    "functional": "c"
   }
 }
