@@ -2,8 +2,8 @@
 Current implementation is valid using methods mentioned in [Riv85]
 
 Enter 64 bit Text : 
-Enter 64 bit key : 
-Encrypted Text : 1001111000100110100111110101101011111010010011011011101101110000
+Enter 56 bit key : 
+Encrypted Text : 0011001111000101000101100000011011110101101110010110111000011010
 Decrypted Text : 1010101111001101111001101010101111001101000100110010010100110110
 
 The Input Text and the Text received after decrypting are identical

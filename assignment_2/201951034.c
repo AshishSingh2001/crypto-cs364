@@ -4,10 +4,7 @@
  * 
  *  DES Cipher
  *  A Simple implementation for DES works on input 
- *  text of size 64 bit and key 64 bit
- * 
- *  Note - The parity bits are automatically ignored while using PC1
- *  so the input is 64 bits as specified in [FIPS46]
+ *  text of size 64 bit and key 64 and 56 bits both
  * 
  *  The implementation has been made using the specification
  *  given in [FIPS46]
@@ -34,6 +31,7 @@ char *round_keys[16];
 void my_gets(char *inp, int len);
 char *xor_string(char *a, char *b);
 char *int_to_binary(int decimal, int maxlen);
+char *remove_parity(char *x);
 
 // Generate Keys
 
@@ -57,18 +55,21 @@ void validate_des();
 // Driver Code
 int main(int argc, char const *argv[])
 {
-    // #ifndef ONLINE_JUDGE
-    //     freopen("input.txt", "r", stdin);
-    //     freopen("output.txt", "w", stdout);
-    // #else
-    // #endif
+    // use input.txt and output.txt as stdin and stdout for debugging
+#ifdef DEBUG
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#else
+#endif
+    // validate the des implementation
     validate_des();
+
     char plain_text[65];
     printf("Enter 64 bit Text : ");
     my_gets(plain_text, 66);
 
     char key[65];
-    printf("Enter 64 bit key : ");
+    printf("Enter 56 bit key : ");
     my_gets(key, 66);
 
     // encrypting using DES
@@ -97,8 +98,23 @@ int main(int argc, char const *argv[])
  */
 char *des(char *input, char *key, bool isDecrypt)
 {
-    generate_keys(key);
-    return data_encryption_algorithm(input, isDecrypt);
+    if (strlen(key) == 64)
+    {
+        // remove parity bits to make key 56 bits
+        key = remove_parity(key);
+    }
+    if (strlen(key) == 56)
+    {
+        // generate keys for each round
+        generate_keys(key);
+        // maine des algorithm
+        return data_encryption_algorithm(input, isDecrypt);
+    }
+    else
+    {
+        perror("Use 56 bit key followe by a \\n");
+        exit(EXIT_FAILURE);
+    }
 }
 
 /**
@@ -147,6 +163,25 @@ void validate_des()
 }
 
 // *************** Utility *****************
+
+/**
+ * @brief removes parity bit for a binary string
+ */
+char *remove_parity(char *x)
+{
+    char *s = (char *)malloc(57);
+    int l = strlen(x);
+    for (size_t i = 0; i < l; i++)
+    {
+        // remove 8th parity bit
+        if ((i + 1) % 8 != 0)
+        {
+            strncat(s, &x[i], 1);
+        }
+    }
+    int temp = strlen(s);
+    return s;
+}
 
 /**
  * @brief wrapper for fgets
@@ -292,15 +327,24 @@ void generate_keys(char *key)
 char *key_pc1(char *key64)
 {
     // The PC1 table
+    // int PC1[56] = {
+    //     57, 49, 41, 33, 25, 17, 9,
+    //     1, 58, 50, 42, 34, 26, 18,
+    //     10, 2, 59, 51, 43, 35, 27,
+    //     19, 11, 3, 60, 52, 44, 36,
+    //     63, 55, 47, 39, 31, 23, 15,
+    //     7, 62, 54, 46, 38, 30, 22,
+    //     14, 6, 61, 53, 45, 37, 29,
+    //     21, 13, 5, 28, 20, 12, 4};
+
     int PC1[56] = {
-        57, 49, 41, 33, 25, 17, 9,
-        1, 58, 50, 42, 34, 26, 18,
-        10, 2, 59, 51, 43, 35, 27,
-        19, 11, 3, 60, 52, 44, 36,
-        63, 55, 47, 39, 31, 23, 15,
-        7, 62, 54, 46, 38, 30, 22,
-        14, 6, 61, 53, 45, 37, 29,
-        21, 13, 5, 28, 20, 12, 4};
+        50, 43, 36, 29, 22, 15, 8, 1,
+        51, 44, 37, 30, 23, 16, 9, 2,
+        52, 45, 38, 31, 24, 17, 10, 3,
+        53, 46, 39, 32, 56, 49, 42, 35,
+        28, 21, 14, 7, 55, 48, 41, 34,
+        27, 20, 13, 6, 54, 47, 40, 33,
+        26, 19, 12, 5, 25, 18, 11, 4};
     char *key56 = (char *)malloc(56 + 1);
     for (int i = 0; i < 56; i++)
     {
