@@ -11,7 +11,7 @@
 #include <ctype.h>
 
 // Utility functions
-void myGets(char *inp, int len);
+void my_gets(char *inp, int len);
 int pMod(int num, int mod);
 
 // Playfair Cipher
@@ -42,7 +42,7 @@ int main(int argc, char const *argv[])
 
     char rawText[50];
     printf("Enter Plain Text : ");
-    myGets(rawText, 50);
+    my_gets(rawText, 50);
 
     // Task 2 - sanitise text
 
@@ -56,7 +56,7 @@ int main(int argc, char const *argv[])
 
     char rawK1[50];
     printf("Enter Playfair Key : ");
-    myGets(rawK1, 50);
+    my_gets(rawK1, 50);
     char *k1 = sanitisePlayfairKey(rawK1);
 
     // Task 5 - Output generated 5x5 key matrix
@@ -115,7 +115,7 @@ int pMod(int num, int mod)
  * gets is deprecated so a wrapper for it using fgets
  * and some formatting for the out put string
  */
-void myGets(char *inp, int len)
+void my_gets(char *inp, int len)
 {
     fgets(inp, len, stdin);
     inp[strcspn(inp, "\n")] = 0;

@@ -11,6 +11,7 @@
     "stdexcept": "c",
     "system_error": "c",
     "typeinfo": "c",
-    "functional": "c"
+    "functional": "c",
+    "string.h": "c"
   }
 }
