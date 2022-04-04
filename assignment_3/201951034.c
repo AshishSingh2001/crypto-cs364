@@ -1,5 +1,5 @@
 /** @file 201951034.c
- *  @brief Code for CS364 lab Assignment
+ *  @brief Code for CS364 lab Assignment 3
  *  Compression function using AES-128
  *  h(m1||m2) = AES-128(m1, m2)
  *  find the second pre image of the for the compression function h
@@ -29,7 +29,7 @@ typedef unsigned int word32; // 32 bit
 // get inv sbox value from array
 #define getInvSBox(num) (inv_sbox[(num)])
 
-/* Primitive polynomial x^8 + x^4 + x^3 + x + 1 for GF 8 */
+/* Primitive polynomial x^8 + x^4 + x^3 + x + 1 for GF 8 used in AES */
 const word8 min_poly = 0b11011;
 
 // Variable to store the 44,   32 bit words
@@ -78,12 +78,12 @@ word8 inv_sbox[256] = {0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x4
 int main()
 {
 
-#ifndef LIVE
+#ifdef LIVE
     freopen("input.txt", "r", stdin);
     freopen("output.txt", "w", stdout);
 #else
 #endif
-
+    printf("INPUT expected to be a 16 letter string\n");
     // input m1
     word8 plain_text[17];
     printf("Enter m1 : ");
@@ -106,8 +106,7 @@ int main()
 
     // Part 2 - Find Second Pre Image
 
-    /*
-        *******************************PROOF*******************************
+    /********************************PROOF*******************************
         We know that h(m1||m2) = AES-128(m1,m2)
         we need to fine m1' and m2' such that
         AES-128(m1',m2') = AES-128(m1,m2) = H   --> (1)

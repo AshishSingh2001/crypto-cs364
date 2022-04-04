@@ -1,3 +1,4 @@
+INPUT : 16 letter string followed by a New Line(\n)
 Enter m1 : 
 m1 : 0x54776F204F6E65204E696E652054776F
 
