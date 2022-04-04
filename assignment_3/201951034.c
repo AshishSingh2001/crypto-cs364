@@ -1,7 +1,9 @@
 /** @file 201951034.c
  *  @brief Code for CS364 lab Assignment
  *  Compression function using AES-128
- *  h(m1||m2) = AES-128(m1, m2).
+ *  h(m1||m2) = AES-128(m1, m2)
+ *  find the second pre image of the for the compression function h
+ *  with the given m1 and m2
  *  @author Ashish Kumar Singh
  */
 
@@ -50,7 +52,7 @@ void rotate_row(word8 *state, size_t shiftBy);
 void inv_rotate_row(word8 *state, word8 shiftBy);
 
 // Key expansion
-word32 key_expansion(word8 key[16]);
+void key_expansion(word8 key[16]);
 word32 subword(word32 w);
 word32 rotword(word32 w);
 void get_key(int round, word8 key[4][4]);
@@ -138,6 +140,7 @@ int main()
     printf("m2' : ");
     print_arr(pre_m2);
 
+    // print AES(m1', m2')
     word8 *preimage_cipher = aes_encrypt(pre_m1, pre_m2);
     printf("h(m1'||m2') : ");
     print_arr(preimage_cipher);
@@ -159,18 +162,27 @@ void my_gets(char *inp, int len)
     printf("\n");
 }
 
+/**
+ * @brief convert array of 16 word8 to a 4x4 matrix
+ */
 void matrixify(word8 arr[17], word8 state[4][4])
 {
     for (int i = 0; i < 16; i++)
         state[i % 4][i / 4] = arr[i];
 }
 
+/**
+ * @brief convert array of 4x4 2d array word8 to a 1d array of len 16
+ */
 void dematrixify(word8 state[4][4], word8 arr[17])
 {
     for (int i = 0; i < 16; i++)
         arr[i] = state[i % 4][i / 4];
 }
 
+/**
+ * @brief merge 4 word8 to a word32
+ */
 word32 merge_word8(word8 arr[4])
 {
     word32 merged_word = 0;
@@ -182,6 +194,9 @@ word32 merge_word8(word8 arr[4])
     return merged_word;
 }
 
+/**
+ * @brief pretty print 4x4 2d array
+ */
 void print_state(word8 arr[4][4])
 {
     for (size_t i = 0; i < 4; i++)
@@ -195,6 +210,9 @@ void print_state(word8 arr[4][4])
     printf("\n");
 }
 
+/**
+ * @brief pretty print 1d array of len 16
+ */
 void print_arr(word8 arr[17])
 {
     // printf("CHAR : %s\n", arr);
@@ -237,6 +255,9 @@ word8 mul(word8 a, word8 b)
 /* AES Helpers :                                                             */
 /*****************************************************************************/
 
+/**
+ * @brief rotate row to the right by mentioned offset
+ */
 void inv_rotate_row(word8 *state, word8 shiftBy)
 {
     int i, j;
@@ -251,6 +272,9 @@ void inv_rotate_row(word8 *state, word8 shiftBy)
     }
 }
 
+/**
+ * @brief rotate row to the left by mentioned offset
+ */
 void rotate_row(word8 *state, size_t shiftBy)
 {
     int i, j;
@@ -269,7 +293,11 @@ void rotate_row(word8 *state, size_t shiftBy)
 /* Key Expansion :                                                           */
 /*****************************************************************************/
 
-word32 key_expansion(word8 key[16])
+/**
+ * @brief expand the 128 bit key to 44 32 bit words which will
+ * be further concatenated to generate 11 keys
+ */
+void key_expansion(word8 key[16])
 {
     word32 Rcon[11] = {
         0x12000000,
@@ -333,6 +361,9 @@ word32 rotword(word32 w)
     return (w << 8) | (w >> (32 - 8));
 }
 
+/**
+ * @brief Get the key fromt he global array w of word32
+ */
 void get_key(int round, word8 key[4][4])
 {
     for (size_t i = 0; i < 4; i++)
@@ -350,6 +381,9 @@ void get_key(int round, word8 key[4][4])
 /* AES Encryption :                                                          */
 /*****************************************************************************/
 
+/**
+ * @brief function that implements the compression function with AES-128
+ */
 word8 *aes_encrypt(word8 text[17], word8 key[17])
 {
     key_expansion(key);
@@ -376,6 +410,9 @@ word8 *aes_encrypt(word8 text[17], word8 key[17])
     return cipher;
 }
 
+/**
+ * @brief add round key to the matrix
+ */
 void add_round_key(word8 arr[4][4], int round)
 {
     word8 key[4][4];
@@ -390,6 +427,9 @@ void add_round_key(word8 arr[4][4], int round)
     }
 }
 
+/**
+ * @brief calculate subbytes for each byte of the array
+ */
 void subbytes(word8 text[4][4])
 {
     for (size_t i = 0; i < 4; ++i)
@@ -401,14 +441,19 @@ void subbytes(word8 text[4][4])
     }
 }
 
+/**
+ * @brief shiftrow left by 0 1 2 3 respectively
+ */
 void shiftrows(word8 text[4][4])
 {
     size_t i;
-    /* iterate over the 4 rows and call rotate_row() with that row */
     for (i = 0; i < 4; i++)
         rotate_row(text[i], i);
 }
 
+/**
+ * @brief implement mixcolumn on the matrix
+ */
 void mixcolumns(word8 arr[4][4])
 {
     for (size_t i = 0; i < 4; i++)
@@ -428,6 +473,9 @@ void mixcolumns(word8 arr[4][4])
 /* AES Decryption :                                                          */
 /*****************************************************************************/
 
+/**
+ * @brief function that implents the decryption of the AES-128
+ */
 word8 *aes_decrypt(word8 cipher[17], word8 key[17])
 {
     key_expansion(key);
@@ -454,6 +502,9 @@ word8 *aes_decrypt(word8 cipher[17], word8 key[17])
     return text;
 }
 
+/**
+ * @brief calculate subbytes inverse for each byte of the array
+ */
 void inv_subbytes(word8 cipher_text[4][4])
 {
     for (size_t i = 0; i < 4; ++i)
@@ -465,6 +516,9 @@ void inv_subbytes(word8 cipher_text[4][4])
     }
 }
 
+/**
+ * @brief shiftrow right by 0 1 2 3 respectively
+ */
 void inv_shiftrows(word8 cipher_text[4][4])
 {
     int i;
@@ -473,6 +527,9 @@ void inv_shiftrows(word8 cipher_text[4][4])
         inv_rotate_row(cipher_text[i], i);
 }
 
+/**
+ * @brief implements inverse of the aes mixcolumn
+ */
 void inv_mixcolumns(word8 arr[4][4])
 {
     for (size_t i = 0; i < 4; i++)
