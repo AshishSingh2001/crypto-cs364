@@ -12,6 +12,19 @@
     "system_error": "c",
     "typeinfo": "c",
     "functional": "c",
-    "string.h": "c"
+    "string.h": "c",
+    "ctime": "c",
+    "chrono": "c",
+    "future": "c",
+    "iomanip": "c",
+    "limits": "c",
+    "numeric": "c",
+    "ranges": "c",
+    "ratio": "c",
+    "shared_mutex": "c",
+    "streambuf": "c",
+    "tuple": "c",
+    "type_traits": "c",
+    "utility": "c"
   }
 }
