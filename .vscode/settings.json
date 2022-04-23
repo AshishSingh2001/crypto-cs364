@@ -25,6 +25,16 @@
     "streambuf": "c",
     "tuple": "c",
     "type_traits": "c",
-    "utility": "c"
+    "utility": "c",
+    "stdbool.h": "c",
+    "sha.h": "c",
+    "charconv": "c",
+    "regex": "c",
+    "cstdio": "c",
+    "cmath": "c",
+    "condition_variable": "c",
+    "bit": "c",
+    "complex": "c",
+    "random": "c"
   }
 }

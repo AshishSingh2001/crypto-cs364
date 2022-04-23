@@ -33,7 +33,7 @@ typedef unsigned int word32; // 32 bit
 const word8 min_poly = 0b11011;
 
 // Variable to store the 44,   32 bit words
-word32 w[44];
+word32 w[60];
 
 // Utility functions
 void print_state(word8 arr[4][4]);
@@ -41,7 +41,7 @@ void my_gets(char *inp, int len);
 word32 merge_word8(word8 arr[4]);
 void matrixify(word8 arr[17], word8 state[4][4]);
 void dematrixify(word8 state[4][4], word8 arr[17]);
-void print_arr(word8 arr[17]);
+void print_arr(word8 arr[17], int len);
 
 // Galois Field Calculations
 word8 mul(word8 a, word8 b);
@@ -58,6 +58,7 @@ word32 rotword(word32 w);
 void get_key(int round, word8 key[4][4]);
 
 // AES Encrypt
+word8 *aes_cbc_encrypt(word8 *text, int msg_len, word8 key[33], word8 *Iv);
 word8 *aes_encrypt(word8 text[17], word8 key[17]);
 void add_round_key(word8 arr[4][4], int round);
 void subbytes(word8 text[4][4]);
@@ -65,6 +66,7 @@ void shiftrows(word8 text[4][4]);
 void mixcolumns(word8 arr[4][4]);
 
 // AES Decrypt
+word8 *aes_cbc_decrypt(word8 *text, int len, word8 key[33], word8 *Iv);
 word8 *aes_decrypt(word8 cipher[17], word8 key[17]);
 void inv_subbytes(word8 cipher_text[4][4]);
 void inv_shiftrows(word8 cipher_text[4][4]);
@@ -85,65 +87,37 @@ int main()
 #endif
     printf("INPUT expected to be a 16 letter string\n");
     // input m1
-    word8 plain_text[17];
-    printf("Enter m1 : ");
-    my_gets(plain_text, 18);
-    printf("m1 : ");
-    print_arr(plain_text);
+    const int ml = 16;
+    // word8 plain_text[20] =
+    //     {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00, 0x11, 0x22};
+    word8 plain_text[65] = {0x6b, 0xc1, 0xbe, 0xe2, 0x2e, 0x40, 0x9f, 0x96, 0xe9, 0x3d, 0x7e, 0x11, 0x73, 0x93, 0x17, 0x2a, 0xae, 0x2d, 0x8a, 0x57, 0x1e, 0x03, 0xac, 0x9c, 0x9e, 0xb7, 0x6f, 0xac, 0x45, 0xaf, 0x8e, 0x51};
+    // word8 plain_text[16 + 1] = {0x6b, 0xc1, 0xbe, 0xe2, 0x2e, 0x40, 0x9f, 0x96, 0xe9, 0x3d, 0x7e, 0x11, 0x73, 0x93, 0x17, 0x2a};
+    plain_text[32] = '\0';
+    // printf("Enter m1 : ");
+    // my_gets(plain_text, 18);
+    printf("text : ");
+    print_arr(plain_text, 32);
 
     // input m2
-    word8 plain_key[17];
-    printf("Enter m2 : ");
-    my_gets(plain_key, 17);
-    printf("m2 : ");
-    print_arr(plain_key);
+    // word8 plain_key[33] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f};
+    word8 plain_key[33] = {0x60, 0x3d, 0xeb, 0x10, 0x15, 0xca, 0x71, 0xbe, 0x2b, 0x73, 0xae, 0xf0, 0x85, 0x7d, 0x77, 0x81, 0x28, 0x1f, 0x35, 0x2c, 0x07, 0x3b, 0x61, 0x08, 0xd7, 0x2d, 0x98, 0x10, 0xa3, 0x09, 0x14, 0xdf, 0xf4};
+    plain_text[32] = '\0';
 
+    word8 iv[17] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+    iv[16] = '\0';
+    // printf("Enter m2 : ");
+    // my_gets(plain_key, 33);
+    printf("key  : ");
+    print_arr(plain_key, 32);
 
     // Part 1 - Implement Compression function h(m1||m2) using AES-128
-    word8 *cipher = aes_encrypt(plain_text, plain_key);
-
-    printf("h(m1||m2) : ");
-    print_arr(cipher);
-
-    // Part 2 - Find Second Pre Image
-
-    /********************************PROOF*******************************
-        We know that h(m1||m2) = AES-128(m1,m2)
-        we need to fine m1' and m2' such that
-        AES-128(m1',m2') = AES-128(m1,m2) = H   --> (1)
-        let us assume a arbitary p
-        m1' = AES-128-DEC(H,p)
-        m2' = p
-        h(m1'||m2') = AES-128(m1',m2')
-        h(m1'||m2') = AES-128(AES-128-DEC(H,p),p)
-        here we are encrypting and decrypting m1' using m2' again so the encryption cancels out.
-        h(m1'||m2') = H
-        h(m1'||m2') = AES-128(m1,m2)
-        which is the definition of seconf preimage from eqn(1)
-
-        *****************************CONCLUSION*****************************
-        We can generate 2^128 number of preimages m1' and m2' using
-        m1' = AES-128-DEC(H,p)
-        m2' = p
-        Where p is a arbitary 128 bit string and H is h(m1||m2)
-    */
-    // m2' = p
-    // This can be any arbitary string of 16 character
-    word8 pre_m2[17] = "give my preimage";
-
-    // m1' = AES-128-DEC(H,p)
-    word8 *pre_m1 = aes_decrypt(cipher, pre_m2);
-
-    // print m1' and m2'
-    printf("m1' : ");
-    print_arr(pre_m1);
-    printf("m2' : ");
-    print_arr(pre_m2);
-
-    // print AES(m1', m2')
-    word8 *preimage_cipher = aes_encrypt(pre_m1, pre_m2);
-    printf("h(m1'||m2') : ");
-    print_arr(preimage_cipher);
+    word8 *cipher = aes_cbc_encrypt(plain_text, 32, plain_key, iv);
+    // word8 *cipher = aes_encrypt(plain_text, plain_key);
+    printf("cipher : ");
+    print_arr(cipher, 32);
+    word8 *text = aes_cbc_decrypt(cipher, 32, plain_key, iv);
+    printf("text : ");
+    print_arr(text, 32);
 }
 
 /*****************************************************************************/
@@ -213,11 +187,11 @@ void print_state(word8 arr[4][4])
 /**
  * @brief pretty print 1d array of len 16
  */
-void print_arr(word8 arr[17])
+void print_arr(word8 *arr, int len)
 {
     // printf("CHAR : %s\n", arr);
     printf("0x");
-    for (size_t i = 0; i < 16; i++)
+    for (size_t i = 0; i < len; i++)
     {
         printf("%02X", arr[i]);
     }
@@ -289,15 +263,26 @@ void rotate_row(word8 *state, size_t shiftBy)
     }
 }
 
+/**
+ * @brief xor with IV
+ */
+void xor_iv(word8 text[17], word8 iv[17])
+{
+    for (size_t i = 0; i < 16; i++)
+    {
+        text[i] ^= iv[i];
+    }
+}
+
 /*****************************************************************************/
 /* Key Expansion :                                                           */
-/*****************************************************************************/
+/******************************************************************************/
 
 /**
  * @brief expand the 128 bit key to 44 32 bit words which will
  * be further concatenated to generate 11 keys
  */
-void key_expansion(word8 key[16])
+void key_expansion(word8 key[32])
 {
     word32 Rcon[11] = {
         0x12000000,
@@ -313,7 +298,7 @@ void key_expansion(word8 key[16])
         0x36000000,
     };
 
-    for (size_t i = 0; i < 4; i++)
+    for (size_t i = 0; i < 8; i++)
     {
         word8 arr[4] = {
             key[4 * i],
@@ -323,15 +308,19 @@ void key_expansion(word8 key[16])
         };
         w[i] = merge_word8(arr);
     }
-    for (size_t i = 4; i < 44; i++)
+    for (size_t i = 8; i < 4 * (14 + 1); i++)
     {
         word32 temp = w[i - 1];
-        if (i % 4 == 0)
+        if (i % 8 == 0)
         {
             temp = subword(rotword(temp));
-            temp ^= Rcon[(i / 4)];
+            temp ^= Rcon[(i / 8)];
         }
-        w[i] = w[i - 4] ^ temp;
+        if (i % 8 == 4)
+        {
+            temp = subword(temp);
+        }
+        w[i] = w[i - 8] ^ temp;
     }
 }
 
@@ -381,28 +370,47 @@ void get_key(int round, word8 key[4][4])
 /* AES Encryption :                                                          */
 /*****************************************************************************/
 
+word8 *aes_cbc_encrypt(word8 *text, int len, word8 key[33], word8 *Iv)
+{
+    key_expansion(key);
+    word8 *iv = Iv;
+    int chunks = len / 16;
+    word8 *enc = malloc(len * sizeof(word8));
+    word8 *buf = malloc(len*sizeof(word8));
+    memcpy(buf, text, len);
+    for (int i = 0; i < chunks; i++)
+    {
+        xor_iv(buf, iv);
+        iv = aes_encrypt(buf, key);
+        memcpy(enc + i * 16, iv, 16);
+        buf += 16;
+    }
+    free(buf);
+    return enc;
+}
+
 /**
  * @brief function that implements the compression function with AES-128
  */
-word8 *aes_encrypt(word8 text[17], word8 key[17])
+word8 *aes_encrypt(word8 text[17], word8 key[33])
 {
     key_expansion(key);
     word8 text_state[4][4], key_state[4][4];
     matrixify(text, text_state);
     matrixify(key, key_state);
     size_t round = 0;
-    while (round <= 10)
+    while (round <= 14)
     {
         if (round != 0)
         {
             subbytes(text_state);
             shiftrows(text_state);
-            if (round != 10)
+            if (round != 14)
                 mixcolumns(text_state);
         }
         add_round_key(text_state, round);
         // printf("After round %lu\n", round);
-        // print_state(text);
+        // print_state(text_state);
         round++;
     }
     word8 *cipher = malloc(17 * sizeof(word8));
@@ -416,6 +424,7 @@ word8 *aes_encrypt(word8 text[17], word8 key[17])
 void add_round_key(word8 arr[4][4], int round)
 {
     word8 key[4][4];
+    // printf("key %d :\n", round);
     get_key(round, key);
     // print_state(key);
     for (size_t i = 0; i < 4; i++)
@@ -473,6 +482,24 @@ void mixcolumns(word8 arr[4][4])
 /* AES Decryption :                                                          */
 /*****************************************************************************/
 
+word8 *aes_cbc_decrypt(word8 *text, int len, word8 key[33], word8 *Iv)
+{
+    key_expansion(key);
+    word8 *iv = Iv;
+    int chunks = len / 16;
+    word8 *dec = malloc(len * sizeof(word8));
+    word8 *buf = text;
+    for (int i = 0; i < chunks; i++)
+    {
+        word8 *temp = aes_decrypt(buf, key);
+        xor_iv(temp, iv);
+        iv = buf;
+        memcpy(dec + i * 16, temp, 16);
+        buf += 16;
+    }
+    return dec;
+}
+
 /**
  * @brief function that implents the decryption of the AES-128
  */
@@ -482,13 +509,13 @@ word8 *aes_decrypt(word8 cipher[17], word8 key[17])
     word8 cipher_state[4][4], key_state[4][4];
     matrixify(cipher, cipher_state);
     matrixify(key, key_state);
-    int round = 10;
+    int round = 14;
     while (round >= 0)
     {
         add_round_key(cipher_state, round);
         if (round != 0)
         {
-            if (round != 10)
+            if (round != 14)
                 inv_mixcolumns(cipher_state);
             inv_shiftrows(cipher_state);
             inv_subbytes(cipher_state);
