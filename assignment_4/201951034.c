@@ -123,7 +123,7 @@ void inv_mixcolumns(word8 arr[4][4]);
 
 int main()
 {
-#ifndef LIVE
+#ifdef LIVE
     freopen("input.txt", "r", stdin);
     freopen("output.txt", "w", stdout);
 #else
@@ -138,14 +138,14 @@ int main()
 
     // Step 4
     int na;
-    printf("Enter Alice's Private Key na : ");
-    scanf("%d\n", &na);
-    printf("\n");
+    printf("Enter Alice's Private Key na [0,100] : ");
+    scanf("%d", &na);
+    printf("%d\n", na);
 
     int nb;
-    printf("Enter Bob's Private Key nb : ");
-    scanf("%d\n", &nb);
-    printf("\n");
+    printf("Enter Bob's Private Key nb [0,100] : ");
+    scanf("%d", &nb);
+    printf("%d\n", nb);
 
     // Step 5 - shared secret key = na*nb*alpha
     printf("\nExchanging na*α and nb*α\n\ngenerating secret key na*nb*α\n");
@@ -165,16 +165,17 @@ int main()
     print_word8(kb, 32);
 
     // Step 9
+    printf("Enter ma : ");
+    scanf("\n");
     int len_ma = 32; // length of space separted 32 bits
     word8 *ma = malloc((len_ma * 3 + 1) * sizeof(word8));
-    printf("Enter ma : ");
     my_gets(ma, len_ma * 3 + 1);
     ma = format(ma);
 
     // Step 10
     word8 *iv = calloc(16 * sizeof(word8), 0x00);
     word8 *ca = aes_cbc_encrypt(ma, 32, ka, iv);
-
+    
     // Step 11
     word8 *maca = malloc(96 * sizeof(word8));
     memcpy(maca, ka, 32);
@@ -198,7 +199,7 @@ int main()
     print_word8(maca, 32);
 
     // Step 13
-    printf("Passign of variables Ca , MACa and IV\n\n");
+    printf("Exchanging variables Ca , MACa and IV alice -> bob\n\n");
 
     // Step 14
     word8 *mb = aes_cbc_decrypt(ca, 32, kb, iv);
